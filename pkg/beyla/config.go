@@ -219,6 +219,9 @@ type Config struct {
 	//nolint:undoc
 	ProfilePort     int             `yaml:"profile_port" env:"OTEL_EBPF_PROFILE_PORT"`
 	InternalMetrics imetrics.Config `yaml:"internal_metrics"`
+
+	// Tracking which Linux capabilities have been used by which process.
+	Capabilities CapabilitiesConfig `yaml:"capabilities"`
 }
 
 // Attributes configures the decoration of some extra attributes that will be
@@ -229,6 +232,12 @@ type Attributes struct {
 	Select               attributes.Selection          `yaml:"select"`
 	HostID               HostIDConfig                  `yaml:"host_id"`
 	ExtraGroupAttributes map[string][]attr.Name        `yaml:"extra_group_attributes"`
+}
+
+type CapabilitiesConfig struct {
+	// Enable logging a line each time a Linux capability is used.
+	// Default value is false (disabled)
+	Enable bool `yaml:"enable" env:"BEYLA_CAPABILITIES_ENABLE"`
 }
 
 type HostIDConfig struct {

@@ -2,6 +2,7 @@ package discover
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"os"
 
@@ -68,6 +69,8 @@ func TraceAttacherProvider(ta *TraceAttacher) swarm.InstanceFunc {
 }
 
 func (ta *TraceAttacher) attacherLoop(_ context.Context) (swarm.RunFunc, error) {
+	fmt.Println("paulin: attacherLoop")
+
 	ta.log = slog.With("component", "discover.TraceAttacher")
 	ta.existingTracers = map[uint64]*ebpf.ProcessTracer{}
 	ta.sdkInjector = otelsdk.NewSDKInjector(ta.Cfg)
@@ -128,6 +131,8 @@ func (ta *TraceAttacher) attacherLoop(_ context.Context) (swarm.RunFunc, error) 
 
 //nolint:cyclop
 func (ta *TraceAttacher) getTracer(ie *ebpf.Instrumentable) bool {
+	fmt.Println("paulin: getTracer")
+
 	if tracer, ok := ta.existingTracers[ie.FileInfo.Ino]; ok {
 		ta.log.Debug("new process for already instrumented executable",
 			"pid", ie.FileInfo.Pid,
@@ -243,6 +248,8 @@ func (ta *TraceAttacher) getTracer(ie *ebpf.Instrumentable) bool {
 }
 
 func (ta *TraceAttacher) withCommonTracersGroup(tracers []ebpf.Tracer) []ebpf.Tracer {
+	fmt.Println("paulin: withCommonTracersGroup")
+
 	if ta.commonTracersLoaded {
 		return tracers
 	}
