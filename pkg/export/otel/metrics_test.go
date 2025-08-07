@@ -582,7 +582,7 @@ func TestMetricsDiscarded(t *testing.T) {
 
 func TestSpanMetricsDiscarded(t *testing.T) {
 	mc := MetricsConfig{
-		Features: []string{FeatureApplication},
+		Features: []string{FeatureSpan},
 	}
 	mr := MetricsReporter{
 		cfg: &mc,
