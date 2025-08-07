@@ -414,7 +414,7 @@ func TestMetricsDiscarded(t *testing.T) {
 
 func TestSpanMetricsDiscarded(t *testing.T) {
 	mc := PrometheusConfig{
-		Features: []string{otel.FeatureApplication},
+		Features: []string{otel.FeatureSpanOTel},
 	}
 	mr := metricsReporter{
 		cfg: &mc,
