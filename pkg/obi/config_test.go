@@ -570,6 +570,79 @@ func TestWillUseTC(t *testing.T) {
 	assert.True(t, cfg.willUseTC())
 }
 
+func TestConfig_SpanMetricsEnabledForTraces(t *testing.T) {
+	tests := []struct {
+		name        string
+		metrics     otel.MetricsConfig
+		prometheus  prom.PrometheusConfig
+		wantEnabled bool
+	}{
+		{
+			name:        "none enabled",
+			metrics:     otel.MetricsConfig{},
+			prometheus:  prom.PrometheusConfig{},
+			wantEnabled: false,
+		},
+		{
+			name: "otel metrics enabled, but not spans",
+			metrics: otel.MetricsConfig{
+				MetricsEndpoint: "http://localhost:4318/v1/metrics",
+				Features:        []string{otel.FeatureApplication},
+			},
+			prometheus:  prom.PrometheusConfig{},
+			wantEnabled: false,
+		},
+		{
+			name: "otel metrics enabled with spans",
+			metrics: otel.MetricsConfig{
+				MetricsEndpoint: "http://localhost:4318/v1/metrics",
+				Features:        []string{otel.FeatureSpanOTel},
+			},
+			prometheus:  prom.PrometheusConfig{},
+			wantEnabled: true,
+		},
+		{
+			name:    "prometheus metrics enabled, but not spans",
+			metrics: otel.MetricsConfig{},
+			prometheus: prom.PrometheusConfig{
+				Port:     9090,
+				Features: []string{otel.FeatureApplication},
+			},
+			wantEnabled: false,
+		},
+		{
+			name:    "prometheus span metrics enabled",
+			metrics: otel.MetricsConfig{},
+			prometheus: prom.PrometheusConfig{
+				Port:     9090,
+				Features: []string{otel.FeatureGraph},
+			},
+			wantEnabled: true,
+		},
+		{
+			name: "both have features, but not enabled",
+			metrics: otel.MetricsConfig{
+				Features: []string{otel.FeatureApplication},
+			},
+			prometheus: prom.PrometheusConfig{
+				Features: []string{otel.FeatureGraph},
+			},
+			wantEnabled: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := &Config{
+				Metrics:    tc.metrics,
+				Prometheus: tc.prometheus,
+			}
+			got := cfg.SpanMetricsEnabledForTraces()
+			assert.Equal(t, tc.wantEnabled, got)
+		})
+	}
+}
+
 func loadConfig(t *testing.T, env envMap) *Config {
 	for k, v := range env {
 		t.Setenv(k, v)
