@@ -355,12 +355,13 @@ func getTracesExporter(ctx context.Context, cfg TracesConfig) (exporter.Traces, 
 		config := factory.CreateDefaultConfig().(*otlphttpexporter.Config)
 		// Experimental API for batching
 		// See: https://github.com/open-telemetry/opentelemetry-collector/issues/8122
-		batchCfg := exporterhelper.NewDefaultBatcherConfig()
+		batchCfg := exporterhelper.NewDefaultQueueConfig()
+		batchCfg.Enabled = true
 		if cfg.MaxQueueSize > 0 {
-			batchCfg.SizeConfig.MaxSize = int64(cfg.MaxExportBatchSize)
+			batchCfg.QueueSize = int64(cfg.MaxExportBatchSize)
 		}
 		if cfg.BatchTimeout > 0 {
-			batchCfg.FlushTimeout = cfg.BatchTimeout
+			batchCfg.Batch.Get().FlushTimeout = cfg.BatchTimeout
 		}
 		config.RetryConfig = getRetrySettings(cfg)
 		config.ClientConfig = confighttp.ClientConfig{
@@ -385,7 +386,7 @@ func getTracesExporter(ctx context.Context, cfg TracesConfig) (exporter.Traces, 
 			exporterhelper.WithShutdown(exporter.Shutdown),
 			exporterhelper.WithCapabilities(consumer.Capabilities{MutatesData: false}),
 			exporterhelper.WithQueue(config.QueueConfig),
-			exporterhelper.WithBatcher(batchCfg),
+			exporterhelper.WithQueueBatch(batchCfg, exporterhelper.QueueBatchSettings{}),
 			exporterhelper.WithRetry(config.RetryConfig))
 	case ProtocolGRPC:
 		slog.Debug("instantiating GRPC TracesReporter", "protocol", proto)
@@ -405,11 +406,11 @@ func getTracesExporter(ctx context.Context, cfg TracesConfig) (exporter.Traces, 
 		// Experimental API for batching
 		// See: https://github.com/open-telemetry/opentelemetry-collector/issues/8122
 		if cfg.MaxExportBatchSize > 0 {
-			config.BatcherConfig.Enabled = true
-			config.BatcherConfig.SizeConfig.MaxSize = int64(cfg.MaxExportBatchSize)
+			config.QueueConfig.Enabled = true
+			config.QueueConfig.Batch.Get().MaxSize = int64(cfg.MaxExportBatchSize)
 		}
 		if cfg.BatchTimeout > 0 {
-			config.BatcherConfig.FlushTimeout = cfg.BatchTimeout
+			config.QueueConfig.Batch.Get().FlushTimeout = cfg.BatchTimeout
 		}
 		config.RetryConfig = getRetrySettings(cfg)
 		config.ClientConfig = configgrpc.ClientConfig{
