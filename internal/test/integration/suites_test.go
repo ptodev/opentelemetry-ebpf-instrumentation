@@ -38,6 +38,7 @@ func TestSuite(t *testing.T) {
 	t.Run("Exemplars exist", testExemplarsExist)
 	t.Run("Testing Host Info metric", testHostInfo)
 	t.Run("Client RED metrics", testREDMetricsForClientHTTPLibrary)
+	t.Run("Harvested auto routes", testREDMetricsHTTPAutoRoutes)
 
 	require.NoError(t, compose.Close())
 }
@@ -518,7 +519,12 @@ func TestSuite_PythonElasticsearch(t *testing.T) {
 
 	compose.Env = append(compose.Env, `OTEL_EBPF_OPEN_PORT=8080`, `OTEL_EBPF_EXECUTABLE_PATH=`, `TEST_SERVICE_PORTS=8381:8080`)
 	require.NoError(t, compose.Up())
-	t.Run("Python Elasticsearch", testPythonElasticsearch)
+	t.Run("Python Elasticsearch", func(t *testing.T) {
+		testPythonElasticsearch(t, "elasticsearch")
+	})
+	t.Run("Python Opensearch", func(t *testing.T) {
+		testPythonElasticsearch(t, "opensearch")
+	})
 	require.NoError(t, compose.Close())
 }
 
@@ -622,6 +628,16 @@ func TestSuiteNoRoutes(t *testing.T) {
 	compose.Env = append(compose.Env, "INSTRUMENTER_CONFIG_SUFFIX=-no-route")
 	require.NoError(t, compose.Up())
 	t.Run("RED metrics", testREDMetricsHTTPNoRoute)
+	require.NoError(t, compose.Close())
+}
+
+func TestSuiteNoRoutesLowCardinality(t *testing.T) {
+	compose, err := docker.ComposeSuite("docker-compose.yml", path.Join(pathOutput, "test-suite-no-routes-low-cardinality.log"))
+	require.NoError(t, err)
+
+	compose.Env = append(compose.Env, "INSTRUMENTER_CONFIG_SUFFIX=-no-route-lc")
+	require.NoError(t, compose.Up())
+	t.Run("RED metrics", testREDMetricsHTTPNoRouteLowCardinality)
 	require.NoError(t, compose.Close())
 }
 

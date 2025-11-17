@@ -228,8 +228,9 @@ discovery:
 			MetricSpanNameAggregationLimit: 100,
 		},
 		Routes: &transform.RoutesConfig{
-			Unmatch:      transform.UnmatchHeuristic,
-			WildcardChar: "*",
+			Unmatch:                   transform.UnmatchHeuristic,
+			WildcardChar:              "*",
+			MaxPathSegmentCardinality: 10,
 		},
 		NameResolver: &transform.NameResolverConfig{
 			Sources:  []string{"k8s", "dns"},
@@ -257,6 +258,9 @@ discovery:
 			},
 			DefaultOtlpGRPCPort:   4317,
 			RouteHarvesterTimeout: 10 * time.Second,
+			RouteHarvestConfig: services.RouteHarvestingConfig{
+				JavaHarvestDelay: 60 * time.Second,
+			},
 		},
 		NodeJS: NodeJSConfig{
 			Enabled: true,

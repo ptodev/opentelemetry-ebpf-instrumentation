@@ -26,6 +26,7 @@
 #define K_TCP_RES_LEN 128
 
 #define PATH_MAX_LEN 100
+#define PATTERN_MAX_LEN 96
 #define METHOD_MAX_LEN 7 // Longest method: OPTIONS
 #define REMOTE_ADDR_MAX_LEN                                                                        \
     50 // We need 48: 39(ip v6 max) + 1(: separator) + 7(port length max value 65535) + 1(null terminator)
@@ -48,7 +49,7 @@ enum large_buf_action : u8 {
 };
 
 enum {
-    k_dns_max_len = 516,
+    k_dns_max_len = 512, // must be a power of 2
 };
 
 #define MAX_SPAN_NAME_LEN 64
@@ -69,6 +70,7 @@ typedef struct http_request_trace {
     s64 content_length;
     s64 response_length;
     unsigned char path[PATH_MAX_LEN];
+    unsigned char pattern[PATTERN_MAX_LEN];
     unsigned char host[HOST_MAX_LEN];
     tp_info_t tp;
     connection_info_t conn;
@@ -246,17 +248,16 @@ typedef struct mongo_go_client_req {
 
 typedef struct dns_req {
     u8 flags; // Must be first we use it to tell what kind of packet we have on the ring buffer
-    u8 p_type;
     u8 dns_q;
-    u8 _pad1[1];
+    u8 _pad1[2];
     u32 len;
     connection_info_t conn;
     u16 id;
     u8 _pad2[2];
     tp_info_t tp;
-    u64 ts;
     // we need this to filter traces from unsolicited processes that share the executable
     // with other instrumented processes
     pid_info pid;
     unsigned char buf[k_dns_max_len];
+    u8 _pad3[4];
 } dns_req_t;
