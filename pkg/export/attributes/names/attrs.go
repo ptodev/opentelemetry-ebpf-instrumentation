@@ -63,6 +63,7 @@ const (
 	GraphQLOperationType   = Name(semconv.GraphqlOperationTypeKey)
 	DNSAnswers             = Name("dns.answers")
 	ErrorMessage           = Name("error.message")
+	TelemetrySDKLanguage   = Name(semconv.TelemetrySDKLanguageKey)
 
 	K8sNamespaceName   = Name("k8s.namespace.name")
 	K8sPodName         = Name("k8s.pod.name")
@@ -87,7 +88,10 @@ const (
 // VendorPrefix allows identifying some metrics (network, internal counters...)
 // as custom metrics, since at the moment they don't follow any semantic convention for them.
 // This value can be overridden when OBI is vendored as a library (e.g. from the OTEL collector)
-var VendorPrefix = "obi"
+var (
+	VendorPrefix  = "obi"
+	VendorSDKName = "opentelemetry-ebpf-instrumentation"
+)
 
 var OBIIP = Name("obi.ip")
 
