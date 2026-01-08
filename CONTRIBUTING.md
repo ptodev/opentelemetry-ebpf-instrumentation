@@ -154,6 +154,9 @@ git push <YOUR_FORK> <YOUR_BRANCH_NAME>
 
 Open a pull request against the main `opentelemetry-ebpf-instrumentation` repo.
 
+> [!TIP]
+> If you need to track changes from multiple upstream repositories (e.g., the Grafana fork), see our guide on [Working with Upstream Repositories](devdocs/working-with-upstream-repositories.md).
+
 ### How to Receive Comments
 
 * If the PR is not ready for review, please put `[WIP]` in the title or mark it as
