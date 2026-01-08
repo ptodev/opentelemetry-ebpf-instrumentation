@@ -199,25 +199,7 @@ func getTracesExporter(ctx context.Context, cfg otelcfg.TracesConfig, im imetric
 		}
 		factory := otlphttpexporter.NewFactory()
 		config := factory.CreateDefaultConfig().(*otlphttpexporter.Config)
-		queueConfig := exporterhelper.NewDefaultQueueConfig()
-		queueConfig.Sizer = exporterhelper.RequestSizerTypeItems
-		// Avoid continuously seeing "sending queue is full" errors in the standard output
-		queueConfig.BlockOnOverflow = true
-		batchCfg := exporterhelper.BatchConfig{
-			Sizer: queueConfig.Sizer,
-		}
-		if cfg.MaxQueueSize > 0 || cfg.BatchTimeout > 0 {
-			queueConfig.Enabled = true
-		}
-		if cfg.MaxQueueSize > 0 {
-			batchCfg.MaxSize = int64(cfg.MaxQueueSize)
-		}
-		if cfg.BatchTimeout > 0 {
-			batchCfg.FlushTimeout = cfg.BatchTimeout
-			batchCfg.MinSize = int64(cfg.MaxQueueSize)
-		}
-		queueConfig.Batch = configoptional.Some(batchCfg)
-		config.QueueConfig = queueConfig
+		config.QueueConfig = getQueueSettings(cfg)
 		config.RetryConfig = getRetrySettings(cfg)
 		config.ClientConfig = confighttp.ClientConfig{
 			Endpoint: opts.Scheme + "://" + opts.Endpoint + opts.BaseURLPath,
@@ -258,23 +240,7 @@ func getTracesExporter(ctx context.Context, cfg otelcfg.TracesConfig, im imetric
 		}
 		factory := otlpexporter.NewFactory()
 		config := factory.CreateDefaultConfig().(*otlpexporter.Config)
-		queueConfig := exporterhelper.NewDefaultQueueConfig()
-		queueConfig.Sizer = exporterhelper.RequestSizerTypeItems
-		batchCfg := exporterhelper.BatchConfig{
-			Sizer: queueConfig.Sizer,
-		}
-		if cfg.MaxQueueSize > 0 || cfg.BatchTimeout > 0 {
-			queueConfig.Enabled = true
-		}
-		if cfg.MaxQueueSize > 0 {
-			batchCfg.MaxSize = int64(cfg.MaxQueueSize)
-		}
-		if cfg.BatchTimeout > 0 {
-			batchCfg.FlushTimeout = cfg.BatchTimeout
-			batchCfg.MinSize = int64(cfg.MaxQueueSize)
-		}
-		queueConfig.Batch = configoptional.Some(batchCfg)
-		config.QueueConfig = queueConfig
+		config.QueueConfig = getQueueSettings(cfg)
 		config.RetryConfig = getRetrySettings(cfg)
 		config.ClientConfig = configgrpc.ClientConfig{
 			Endpoint: endpoint.String(),
@@ -347,6 +313,29 @@ func getTraceSettings(dataTypeMetrics component.Type, sdkLogLevel string) export
 		ID:                component.NewIDWithName(dataTypeMetrics, "beyla"),
 		TelemetrySettings: telemetrySettings,
 	}
+}
+
+func getQueueSettings(cfg otelcfg.TracesConfig) configoptional.Optional[exporterhelper.QueueBatchConfig] {
+	if cfg.MaxQueueSize <= 0 && cfg.BatchTimeout <= 0 {
+		return configoptional.None[exporterhelper.QueueBatchConfig]()
+	}
+
+	queueConfig := exporterhelper.NewDefaultQueueConfig()
+	queueConfig.Sizer = exporterhelper.RequestSizerTypeItems
+	// Avoid continuously seeing "sending queue is full" errors in the standard output
+	queueConfig.BlockOnOverflow = true
+	batchCfg := exporterhelper.BatchConfig{
+		Sizer: queueConfig.Sizer,
+	}
+	if cfg.MaxQueueSize > 0 {
+		batchCfg.MaxSize = int64(cfg.MaxQueueSize)
+	}
+	if cfg.BatchTimeout > 0 {
+		batchCfg.FlushTimeout = cfg.BatchTimeout
+		batchCfg.MinSize = int64(cfg.MaxQueueSize)
+	}
+	queueConfig.Batch = configoptional.Some(batchCfg)
+	return configoptional.Some(queueConfig)
 }
 
 func getRetrySettings(cfg otelcfg.TracesConfig) configretry.BackOffConfig {
