@@ -141,6 +141,13 @@ func (tr *tracesOTELReceiver) processSpans(ctx context.Context, exp exporter.Tra
 	}
 }
 
+// emptyHost prevents nil pointer dereference after invoking exp.Start below
+type emptyHost struct{}
+
+func (emptyHost) GetExtensions() map[component.ID]component.Component {
+	return nil
+}
+
 func (tr *tracesOTELReceiver) provideLoop(ctx context.Context) {
 	exp, err := getTracesExporter(ctx, tr.cfg, tr.ctxInfo.Metrics)
 	if err != nil {
@@ -153,7 +160,7 @@ func (tr *tracesOTELReceiver) provideLoop(ctx context.Context) {
 			slog.Error("error shutting down traces exporter", "error", err)
 		}
 	}()
-	err = exp.Start(ctx, nil)
+	err = exp.Start(ctx, emptyHost{})
 	if err != nil {
 		slog.Error("error starting traces exporter", "error", err)
 		return
